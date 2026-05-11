@@ -1,0 +1,24 @@
+{
+  "name": "basebrick-bricklayer",
+  "version": "1.0.1",
+  "type": "module",
+  "description": "BaseBrick static site generator (JamBrick)",
+  "main": "index.js",
+  "bin": {
+    "bricklayer": "./bin/bricklayer.js"
+  },
+  "keywords": [
+    "jamstack",
+    "static-site-generator",
+    "ssg",
+    "basebrick",
+    "nunjucks",
+    "cms"
+  ],
+  "author": "Chris <hello@basebrick.xyz>",
+  "license": "MIT",
+  "dependencies": {
+    "gray-matter": "^4.0.3",
+    "nunjucks": "^3.2.4"
+  }
+}
