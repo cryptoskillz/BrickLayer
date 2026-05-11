@@ -190,7 +190,11 @@ export async function buildSite(options = {}) {
             
             console.log(`Successfully fetched ${remoteData.length} items from remote source.`);
         } catch (e) {
-            console.error('Error fetching remote content:', e);
+            if ((e.cause && e.cause.code === 'ECONNREFUSED') || e.message.includes('fetch failed')) {
+                console.warn(`\n⚠️  CMS Not Found: Could not connect to remote API. Make sure your CMS is running.\n`);
+            } else {
+                console.error('Error fetching remote content:', e.message || e);
+            }
         }
     }
 
@@ -277,7 +281,7 @@ export async function buildSite(options = {}) {
     console.log('Building Tailwind CSS...');
     try {
         const tailwindArgs = isProd ? '--minify' : '';
-        execSync(`npx tailwindcss -i "${config.css.input}" -o "${config.css.output}" ${tailwindArgs}`, { stdio: 'inherit' });
+        execSync(`npx @tailwindcss/cli -i "${config.css.input}" -o "${config.css.output}" ${tailwindArgs}`, { stdio: 'inherit' });
         console.log('Tailwind CSS built successfully!');
     } catch (error) {
         console.error('Failed to build Tailwind CSS:', error);

@@ -12,7 +12,15 @@ Bricklayer is the core static site generator (JamBrick) for BaseBrick. It is des
 
 ## Installation
 
-Since Bricklayer is a local module within the BaseBrick ecosystem, you can link it directly:
+To create a new Bricklayer project with automatic scaffolding, run the `init` command:
+
+```bash
+npx bricklayer init
+```
+
+This interactive setup will create the default folder structure and ask if you'd like to scaffold a demo site with starter templates, as well as configure Sonic JS CMS integration automatically.
+
+Alternatively, if you are working within the BaseBrick ecosystem locally, you can link it:
 
 ```bash
 cd bricklayer
