@@ -8,6 +8,7 @@ Bricklayer is the core static site generator (JamBrick) for BaseBrick. It is des
 - **Dynamic Content Fetching**: Automatically fetches content from a headless CMS based on configuration (`components/generic.json`) and generates individual pages for each content item with clean, SEO-friendly slugs.
 - **Production Optimization**: In production mode (`--prod`), it minifies HTML and CSS, and compresses image assets using `sharp`.
 - **Tailwind Integration**: Seamlessly builds Tailwind CSS using `@tailwindcss/cli`, supporting development and production (minified) builds.
+- **Environment Variables**: Natively loads `.env` and `.dev.vars` (Cloudflare) files, makes variables accessible globally in Nunjucks templates, and interpolates variables in `generic.json`.
 
 ## Installation
 
@@ -73,6 +74,13 @@ To enable remote CMS fetching, place a `generic.json` configuration file in `src
 
 - `indexPage`: The template (e.g., `blog.njk`) where an array of posts will be injected under the `posts` variable.
 - `postPage`: The template (e.g., `post.njk`) that will be used to generate individual pages for each item fetched from the API. The generated HTML will be placed in a directory matching the `postPage` name (e.g., `public/post/my-slug.html`).
+
+## Environment Variables
+
+Bricklayer natively supports reading `.env` and `.dev.vars` (Cloudflare Pages) files from the project's root directory.
+
+- **Nunjucks Templates:** Variables are automatically passed to Nunjucks templates under the global `env` object. E.g., `{{ env.MY_API_KEY }}`.
+- **CMS Configuration:** Environment variables can be directly interpolated in `generic.json` strings using the `${VARIABLE_NAME}` syntax.
 
 ## Directory Structure
 

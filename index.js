@@ -5,9 +5,34 @@ import nunjucks from 'nunjucks';
 import matter from 'gray-matter';
 import { execSync } from 'child_process';
 
+// Simple environment variable loader (.env and .dev.vars)
+function loadEnv(cwd) {
+    const envFiles = ['.env', '.dev.vars'];
+    for (const file of envFiles) {
+        const envPath = path.join(cwd, file);
+        if (fs.existsSync(envPath)) {
+            const lines = fs.readFileSync(envPath, 'utf8').split('\n');
+            for (const line of lines) {
+                const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+                if (match) {
+                    const key = match[1];
+                    let value = match[2] || '';
+                    value = value.replace(/(^['"]|['"]$)/g, '').trim();
+                    if (process.env[key] === undefined) {
+                        process.env[key] = value;
+                    }
+                }
+            }
+        }
+    }
+}
+
 export async function buildSite(options = {}) {
     const cwd = options.cwd || process.cwd();
     const isProd = options.isProd || false;
+    
+    // Load environment variables from .env file
+    loadEnv(cwd);
 
     // Conditionally import minifiers so build doesn't fail if they aren't installed yet
     let minifyHtml;
@@ -102,6 +127,9 @@ export async function buildSite(options = {}) {
         autoescape: false,
         noCache: true
     });
+    
+    // Support environment variables in Nunjucks templates
+    env.addGlobal('env', process.env);
 
     // Fetch remote content based on generic.json
     const genericJsonPath = path.join(config.srcDir, 'components', 'generic.json');
@@ -110,7 +138,12 @@ export async function buildSite(options = {}) {
 
     if (fs.existsSync(genericJsonPath)) {
         try {
-            cmsConfig = JSON.parse(fs.readFileSync(genericJsonPath, 'utf-8'));
+            let jsonString = fs.readFileSync(genericJsonPath, 'utf-8');
+            
+            // Substitute environment variables in the format ${VAR_NAME}
+            jsonString = jsonString.replace(/\$\{([^}]+)\}/g, (_, varName) => process.env[varName] || '');
+            
+            cmsConfig = JSON.parse(jsonString);
             const baseUrl = isProd ? cmsConfig.productionUrl : cmsConfig.locaLUrl;
             const apiUrl = `${baseUrl.replace(/\/$/, '')}/${cmsConfig.apiUrl.replace(/^\//, '')}`;
             
