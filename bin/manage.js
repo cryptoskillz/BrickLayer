@@ -10,7 +10,8 @@ const rl = readline.createInterface({
 
 const question = (query) => new Promise((resolve) => rl.question(query, resolve));
 
-export async function manageProject(cwd) {
+export async function manageProject(cwd, options = {}) {
+    const { reconfigure = false, url = null, token = null } = options;
     const localConfigPath = path.join(cwd, '.basebrick.config');
     
     if (!fs.existsSync(localConfigPath)) {
@@ -30,9 +31,28 @@ export async function manageProject(cwd) {
         }
     }
 
+    if (reconfigure) {
+        managerConfig = {};
+    }
+
+    if (url) {
+        managerConfig.url = url;
+    }
+    if (token) {
+        managerConfig.token = token;
+    }
+
+    if (managerConfig.url && !managerConfig.url.endsWith('/api/sites')) {
+        managerConfig.url = managerConfig.url.replace(/\/+$/, '') + '/api/sites';
+    }
+
     if (!managerConfig.url) {
         const urlRaw = await question('What is your Bricklayer Manager URL? ');
-        managerConfig.url = urlRaw.trim();
+        let url = urlRaw.trim();
+        if (!url.endsWith('/api/sites')) {
+            url = url.replace(/\/+$/, '') + '/api/sites';
+        }
+        managerConfig.url = url;
     }
 
     if (!managerConfig.token) {
@@ -57,6 +77,66 @@ export async function manageProject(cwd) {
         rl.close();
         return;
     }
+
+    // Consolidate legacy keys to prefer user edits
+    if (projectConfig.projectName && projectConfig.projectName !== projectConfig.name) {
+        projectConfig.name = projectConfig.projectName;
+    }
+    if (projectConfig.projectDescription && projectConfig.projectDescription !== projectConfig.description) {
+        projectConfig.description = projectConfig.projectDescription;
+    }
+    if (projectConfig.githubRepo && projectConfig.githubRepo !== projectConfig.githubUrl) {
+        projectConfig.githubUrl = projectConfig.githubRepo;
+    }
+    
+    // Clean up duplicate legacy keys
+    delete projectConfig.projectName;
+    delete projectConfig.projectDescription;
+    delete projectConfig.githubRepo;
+
+    // Normalize githubUrl
+    if (projectConfig.githubUrl) {
+        projectConfig.githubUrl = projectConfig.githubUrl.replace(/^git\+/, '').replace(/\.git$/, '');
+    }
+
+    // Extract description from package.json if not explicitly set
+    const pkgPath = path.join(cwd, 'package.json');
+    if (fs.existsSync(pkgPath)) {
+        try {
+            const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+            if (pkg.description && !projectConfig.description) {
+                projectConfig.description = pkg.description;
+            }
+            if (pkg.repository && pkg.repository.url && !projectConfig.githubUrl) {
+                let repoUrl = pkg.repository.url.replace(/^git\+/, '').replace(/\.git$/, '');
+                projectConfig.githubUrl = repoUrl;
+            }
+        } catch (e) {
+            console.error('Warning: Could not parse package.json');
+        }
+    }
+
+    // Extract name and account_id from wrangler.toml
+    const wranglerPath = path.join(cwd, 'wrangler.toml');
+    if (fs.existsSync(wranglerPath)) {
+        try {
+            const wranglerContent = fs.readFileSync(wranglerPath, 'utf8');
+            const nameMatch = wranglerContent.match(/^name\s*=\s*"([^"]+)"/m);
+            if (nameMatch && nameMatch[1] && !projectConfig.name) {
+                projectConfig.name = nameMatch[1];
+            }
+            
+            const accountMatch = wranglerContent.match(/^account_id\s*=\s*"([^"]+)"/m);
+            if (accountMatch && accountMatch[1]) {
+                projectConfig.accountId = accountMatch[1];
+            }
+        } catch (e) {
+            console.error('Warning: Could not parse wrangler.toml');
+        }
+    }
+
+    // Save cleaned config back to .basebrick.config
+    fs.writeFileSync(localConfigPath, JSON.stringify(projectConfig, null, 2));
 
     console.log(`\nSending project configuration to ${managerConfig.url}...`);
 

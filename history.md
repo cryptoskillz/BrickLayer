@@ -1,5 +1,12 @@
 # Version History
 
+## 1.2.0 (May 2026)
+
+- **CLI Deployment Wrapper**: Introduced `bricklayer deploy` command using a pseudo-TTY to seamlessly wrap `wrangler deploy` across environments, automatically intercepting and capturing live Cloudflare URLs.
+- **Automated Config Sync**: The `bricklayer manage` tool now seamlessly parses Cloudflare `account_id` from `wrangler.toml` and syncs it with your central configuration.
+- **Manager Dashboard Upgrades**: Added real-time, silent dashboard polling and integrated direct Cloudflare Worker dashboard deep links for registered sites.
+- **Site Management**: Implemented site deletion functionality within the manager UI and securely moved the API Configuration Token into an isolated Settings page.
+
 ## 1.1.0 (May 2026)
 
 - **Interactive Scaffolding**: Added `bricklayer init` command to scaffold new projects via an interactive wizard, generating `.gitignore` and `.basebrick.config` automatically.
