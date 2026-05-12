@@ -23,6 +23,18 @@ npx bricklayer init
 
 This interactive setup will create the default folder structure and ask if you'd like to scaffold a demo site with starter templates, as well as configure Sonic JS CMS integration automatically.
 
+## Automated Deployment (GitHub Actions)
+
+If you chose to generate a `deploy.yml` workflow during initialization, Bricklayer will automatically deploy your site to Cloudflare on every push to the `main` branch. 
+
+For Wrangler to authenticate correctly in a non-interactive CI/CD environment, you **must** configure your repository secrets.
+
+1. Go to [Cloudflare API Tokens](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/) and create an API Token with `Edit Cloudflare Workers` permissions.
+2. In your GitHub repository, navigate to **Settings > Secrets and variables > Actions**.
+3. Create two new Repository Secrets:
+   - `CLOUDFLARE_API_TOKEN`: Your newly created API token.
+   - `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare Account ID (found on your Cloudflare dashboard overview).
+
 Alternatively, if you are working within the BaseBrick ecosystem locally, you can link it:
 
 ```bash

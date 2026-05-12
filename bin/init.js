@@ -234,8 +234,9 @@ url: post.title
         try {
             const existing = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
             pkg = { ...pkg, ...existing };
-            pkg.dependencies = { ...pkg.dependencies, ...existing.dependencies };
-            pkg.devDependencies = { ...pkg.devDependencies, ...existing.devDependencies };
+            pkg.scripts = { ...(existing.scripts || {}), ...pkg.scripts };
+            pkg.dependencies = { ...(existing.dependencies || {}), ...pkg.dependencies };
+            pkg.devDependencies = { ...(existing.devDependencies || {}), ...pkg.devDependencies };
         } catch(e) {}
     }
 
