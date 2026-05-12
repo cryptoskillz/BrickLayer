@@ -35,6 +35,9 @@ export async function initProject(cwd) {
     const projectNameRaw = await question('What is the name of your project? (bricklayer-site) ');
     const projectName = projectNameRaw.trim() || 'bricklayer-site';
 
+    const projectDescriptionRaw = await question('Project description (optional): ');
+    const projectDescription = projectDescriptionRaw.trim() || '';
+
     const githubRepoRaw = await question('What is the GitHub repository URL? (leave blank for none) ');
     const githubRepo = githubRepoRaw.trim();
 
@@ -100,7 +103,7 @@ export async function initProject(cwd) {
     // 2. Create base CSS
     const cssPath = path.join(cwd, 'src/assets/tailwind/input.css');
     if (!fs.existsSync(cssPath)) {
-        fs.writeFileSync(cssPath, `@tailwind base;\n@tailwind components;\n@tailwind utilities;\n`);
+        fs.writeFileSync(cssPath, `@import "tailwindcss";\n\n@source "../../**/*.njk";\n`);
         console.log(' Created src/assets/tailwind/input.css');
     }
 
@@ -209,11 +212,13 @@ url: post.title
     const pkgPath = path.join(cwd, 'package.json');
     let pkg = {
         name: projectName,
+        description: projectDescription,
         version: "1.0.0",
         type: "module",
         scripts: {
             build: "bricklayer",
-            "build:prod": "bricklayer --prod"
+            "build:prod": "bricklayer --prod",
+            manage: "bricklayer manage"
         },
         dependencies: {},
         devDependencies: {
@@ -237,8 +242,8 @@ url: post.title
     if (includeCloudflare) {
         console.log('\nConfiguring Cloudflare...');
         pkg.scripts.start = "wrangler dev";
-        pkg.scripts["deploy:preview"] = "npm run build:prod && wrangler deploy --env preview";
-        pkg.scripts["deploy:prod"] = "npm run build:prod && wrangler deploy";
+        pkg.scripts["deploy:preview"] = "npm run build:prod && bricklayer deploy --preview";
+        pkg.scripts["deploy:prod"] = "npm run build:prod && bricklayer deploy";
         pkg.devDependencies.wrangler = "^3.0.0";
         
         const wranglerPath = path.join(cwd, 'wrangler.toml');
@@ -365,8 +370,9 @@ ${deploySteps}`;
 
     const basebrickConfigPath = path.join(cwd, '.basebrick.config');
     const basebrickConfig = {
-        projectName,
-        githubRepo,
+        name: projectName,
+        description: projectDescription,
+        githubUrl: githubRepo,
         includeDemo,
         includeSonic,
         pullSonic,

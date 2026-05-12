@@ -99,6 +99,23 @@ Bricklayer natively supports reading `.env` and `.dev.vars` (Cloudflare Pages) f
 - **Nunjucks Templates:** Variables are automatically passed to Nunjucks templates under the global `env` object. E.g., `{{ env.MY_API_KEY }}`.
 - **CMS Configuration:** Environment variables can be directly interpolated in `generic.json` strings using the `${VARIABLE_NAME}` syntax.
 
+## Bricklayer Manager
+
+Bricklayer includes a centralized dashboard to help you track and administer all your statically generated sites.
+
+The **Bricklayer Manager** allows you to:
+- View all deployed Bricklayer sites via an elegant web UI.
+- Automatically track and store Cloudflare Worker endpoints.
+- Access deep links directly to Cloudflare Dashboards for easy debugging.
+
+You can find the source code and instructions for deploying your own manager instance in the `manager/` directory of the core [BrickLayer GitHub Repository](https://github.com/cryptoskillz/BrickLayer/tree/main/manager).
+
+Once your manager is deployed, use the CLI command to securely sync any of your projects:
+
+```bash
+bricklayer manage
+```
+
 ## Directory Structure
 
 Bricklayer expects the following default structure (overridable via options):

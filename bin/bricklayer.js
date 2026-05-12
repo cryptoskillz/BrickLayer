@@ -15,6 +15,7 @@ Commands:
   (empty)     Run a standard development build
   init        Scaffold a new project (Demo, CMS, Cloudflare API)
   manage      Register this project with a Bricklayer Manager
+  deploy      Deploy the project to Cloudflare and register its URL
   help        Show this help message
 
 Options:
@@ -36,8 +37,21 @@ Generated NPM Scripts (after init):
 
 if (args.includes('init')) {
     initProject(process.cwd()).catch(console.error);
+} else if (args.includes('deploy')) {
+    const preview = args.includes('--preview');
+    import('./deploy.js').then(m => m.deployProject(process.cwd(), { preview })).catch(console.error);
 } else if (args.includes('manage')) {
-    import('./manage.js').then(m => m.manageProject(process.cwd())).catch(console.error);
+    const reconfigure = args.includes('-c') || args.includes('--config');
+    let url = null;
+    let token = null;
+    
+    const uIndex = args.findIndex(a => a === '-u' || a === '--url');
+    if (uIndex !== -1 && args[uIndex + 1]) url = args[uIndex + 1];
+    
+    const tIndex = args.findIndex(a => a === '-t' || a === '--token');
+    if (tIndex !== -1 && args[tIndex + 1]) token = args[tIndex + 1];
+
+    import('./manage.js').then(m => m.manageProject(process.cwd(), { reconfigure, url, token })).catch(console.error);
 } else {
     const isProd = args.includes('--prod');
     buildSite({ isProd, cwd: process.cwd() })
