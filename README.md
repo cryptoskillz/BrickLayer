@@ -9,6 +9,9 @@ Bricklayer is the core static site generator (JamBrick) for BaseBrick. It is des
 - **Production Optimization**: In production mode (`--prod`), it minifies HTML and CSS, and compresses image assets using `sharp`.
 - **Tailwind Integration**: Seamlessly builds Tailwind CSS using `@tailwindcss/cli`, supporting development and production (minified) builds.
 - **Environment Variables**: Natively loads `.env` and `.dev.vars` (Cloudflare) files, makes variables accessible globally in Nunjucks templates, and interpolates variables in `generic.json`.
+- **Automated Deployments**: Scaffolding optionally generates tailored GitHub Actions (`deploy.yml`) workflows for seamless CI/CD.
+- **Cloudflare Native**: Integrates native Cloudflare Workers support, automatically configuring `deploy:prod` and `deploy:preview` environments mapped to `wrangler.toml`.
+- **Centralized Management**: Includes a `bricklayer manage` command to securely register and sync your local `.basebrick.config` settings with a central Manager API.
 
 ## Installation
 
@@ -44,6 +47,12 @@ To run a production build (minifies HTML/CSS, compresses images):
 
 ```bash
 bricklayer --prod
+```
+
+To sync your project settings with a central Bricklayer Manager instance:
+
+```bash
+bricklayer manage
 ```
 
 ### Module
@@ -94,7 +103,11 @@ Bricklayer natively supports reading `.env` and `.dev.vars` (Cloudflare Pages) f
 
 Bricklayer expects the following default structure (overridable via options):
 
-```
+```text
+├── .github/
+│   └── workflows/
+│       └── deploy.yml  # Auto-generated GitHub Actions
+├── cms/                # (Optional) Cloned Sonic JS CMS
 ├── src/
 │   ├── _includes/      # Nunjucks layouts
 │   ├── assets/         # Static assets (images, fonts, tailwind)
@@ -102,5 +115,8 @@ Bricklayer expects the following default structure (overridable via options):
 │   ├── index.njk       # Pages
 │   └── post.njk
 ├── public/             # Build output
+├── .basebrick.config   # Bricklayer project settings
+├── .gitignore          # Version control exclusions
+├── wrangler.toml       # (Optional) Cloudflare configuration
 └── package.json
 ```
