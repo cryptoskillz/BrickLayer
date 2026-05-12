@@ -129,9 +129,24 @@ export async function manageProject(cwd, options = {}) {
             const accountMatch = wranglerContent.match(/^account_id\s*=\s*"([^"]+)"/m);
             if (accountMatch && accountMatch[1]) {
                 projectConfig.accountId = accountMatch[1];
+            } else if (process.env.CLOUDFLARE_ACCOUNT_ID) {
+                projectConfig.accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
             }
         } catch (e) {
             console.error('Warning: Could not parse wrangler.toml');
+        }
+    }
+
+    if (!projectConfig.accountId) {
+        try {
+            const { execSync } = await import('child_process');
+            const whoamiOutput = execSync('npx wrangler whoami', { stdio: 'pipe', encoding: 'utf8' });
+            const match = whoamiOutput.match(/Account ID[^\n]*?([a-f0-9]{32})/i);
+            if (match && match[1]) {
+                projectConfig.accountId = match[1];
+            }
+        } catch (e) {
+            // Ignore if whoami fails
         }
     }
 
