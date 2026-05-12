@@ -58,6 +58,9 @@ export async function initProject(cwd) {
         cfFramework = fw.trim() === '1' ? 'hono' : 'vanilla';
     }
 
+    const deployYml = await question('Would you like to generate a GitHub Actions deploy.yml? (Y/n) ');
+    const createDeploy = deployYml.toLowerCase() !== 'n';
+
     console.log('\nScaffolding project...');
 
     // 1. Create directory structure
@@ -234,12 +237,13 @@ url: post.title
     if (includeCloudflare) {
         console.log('\nConfiguring Cloudflare...');
         pkg.scripts.start = "wrangler dev";
-        pkg.scripts.deploy = "npm run build:prod && wrangler deploy";
+        pkg.scripts["deploy:preview"] = "npm run build:prod && wrangler deploy --env preview";
+        pkg.scripts["deploy:prod"] = "npm run build:prod && wrangler deploy";
         pkg.devDependencies.wrangler = "^3.0.0";
         
         const wranglerPath = path.join(cwd, 'wrangler.toml');
         if (!fs.existsSync(wranglerPath)) {
-            fs.writeFileSync(wranglerPath, `name = "${projectName}"\ncompatibility_date = "2024-05-12"\nmain = "api/worker.js"\n\n[assets]\ndirectory = "./public"\n`);
+            fs.writeFileSync(wranglerPath, `name = "${projectName}"\ncompatibility_date = "2024-05-12"\nmain = "api/worker.js"\n\n[assets]\ndirectory = "./public"\n\n[env.preview]\nname = "${projectName}-preview"\n`);
             console.log(' Created wrangler.toml');
         }
 
@@ -289,6 +293,76 @@ url: post.title
         console.log(' Created .gitignore');
     }
 
+    if (createDeploy) {
+        console.log('\nConfiguring GitHub Actions deploy.yml...');
+        const githubDir = path.join(cwd, '.github', 'workflows');
+        if (!fs.existsSync(githubDir)) {
+            fs.mkdirSync(githubDir, { recursive: true });
+            console.log(' Created .github/workflows/');
+        }
+
+        let deploySteps = `      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+`;
+
+        if (includeCloudflare) {
+            deploySteps += `
+      - name: Build and Deploy Site
+        run: npm run deploy:prod
+        env:
+          CLOUDFLARE_API_TOKEN: \${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+`;
+        } else {
+            deploySteps += `
+      - name: Build Site
+        run: npm run build:prod
+`;
+        }
+
+        if (includeSonic && pullSonic) {
+            deploySteps += `
+      - name: Install CMS dependencies
+        run: npm install
+        working-directory: ./cms
+
+      - name: Deploy Sonic CMS
+        run: npm run deploy
+        working-directory: ./cms
+        env:
+          CLOUDFLARE_API_TOKEN: \${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+`;
+        }
+        const deployYmlContent = `name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+${deploySteps}`;
+
+        const deployYmlPath = path.join(githubDir, 'deploy.yml');
+        fs.writeFileSync(deployYmlPath, deployYmlContent);
+        console.log(' Created .github/workflows/deploy.yml');
+        if (includeCloudflare || (includeSonic && pullSonic)) {
+            console.log(' NOTE: Make sure to add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID to your GitHub repository secrets.');
+        }
+    }
+
     const basebrickConfigPath = path.join(cwd, '.basebrick.config');
     const basebrickConfig = {
         projectName,
@@ -297,7 +371,8 @@ url: post.title
         includeSonic,
         pullSonic,
         includeCloudflare,
-        cfFramework
+        cfFramework,
+        createDeploy
     };
     fs.writeFileSync(basebrickConfigPath, JSON.stringify(basebrickConfig, null, 2));
     console.log(' Created .basebrick.config');
@@ -307,8 +382,9 @@ url: post.title
     console.log('  1. Run `npm install` to install dependencies');
     console.log('  2. Run `npm run build` to build the static site (or `npm run build:prod` for production)');
     if (includeCloudflare) {
-        console.log('  3. Run `npm start` to test your Cloudflare Worker locally');
-        console.log('  4. Run `npm run deploy` to deploy to Cloudflare\n');
+        console.log('  3. Run `npm run start` to test your Cloudflare Worker locally');
+        console.log('  4. Run `npm run deploy:preview` to deploy to a Cloudflare preview environment');
+        console.log('  5. Run `npm run deploy:prod` to deploy to Cloudflare production\n');
     } else {
         console.log('');
     }

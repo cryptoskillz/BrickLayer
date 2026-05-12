@@ -25,6 +25,11 @@ Examples:
   bricklayer manage      Send project configuration to your central Bricklayer Manager
   bricklayer             Builds the site in development mode
   bricklayer --prod      Builds the site with production optimizations
+
+Generated NPM Scripts (after init):
+  npm run start           Test your Cloudflare Worker locally
+  npm run deploy:preview  Deploy to a Cloudflare preview environment
+  npm run deploy:prod     Deploy to Cloudflare production
 `);
     process.exit(0);
 }
