@@ -8,10 +8,22 @@ Bricklayer is the core static site generator (JamBrick) for BaseBrick. It is des
 - **Dynamic Content Fetching**: Automatically fetches content from a headless CMS based on configuration (`components/generic.json`) and generates individual pages for each content item with clean, SEO-friendly slugs.
 - **Production Optimization**: In production mode (`--prod`), it minifies HTML and CSS, and compresses image assets using `sharp`.
 - **Tailwind Integration**: Seamlessly builds Tailwind CSS using `@tailwindcss/cli`, supporting development and production (minified) builds.
+- **Environment Variables**: Natively loads `.env` and `.dev.vars` (Cloudflare) files, makes variables accessible globally in Nunjucks templates, and interpolates variables in `generic.json`.
+- **Automated Deployments**: Scaffolding optionally generates tailored GitHub Actions (`deploy.yml`) workflows for seamless CI/CD.
+- **Cloudflare Native**: Integrates native Cloudflare Workers support, automatically configuring `deploy:prod` and `deploy:preview` environments mapped to `wrangler.toml`.
+- **Centralized Management**: Includes a `bricklayer manage` command to securely register and sync your local `.basebrick.config` settings with a central Manager API.
 
 ## Installation
 
-Since Bricklayer is a local module within the BaseBrick ecosystem, you can link it directly:
+To create a new Bricklayer project with automatic scaffolding, run the `init` command:
+
+```bash
+npx bricklayer init
+```
+
+This interactive setup will create the default folder structure and ask if you'd like to scaffold a demo site with starter templates, as well as configure Sonic JS CMS integration automatically.
+
+Alternatively, if you are working within the BaseBrick ecosystem locally, you can link it:
 
 ```bash
 cd bricklayer
@@ -35,6 +47,12 @@ To run a production build (minifies HTML/CSS, compresses images):
 
 ```bash
 bricklayer --prod
+```
+
+To sync your project settings with a central Bricklayer Manager instance:
+
+```bash
+bricklayer manage
 ```
 
 ### Module
@@ -74,11 +92,22 @@ To enable remote CMS fetching, place a `generic.json` configuration file in `src
 - `indexPage`: The template (e.g., `blog.njk`) where an array of posts will be injected under the `posts` variable.
 - `postPage`: The template (e.g., `post.njk`) that will be used to generate individual pages for each item fetched from the API. The generated HTML will be placed in a directory matching the `postPage` name (e.g., `public/post/my-slug.html`).
 
+## Environment Variables
+
+Bricklayer natively supports reading `.env` and `.dev.vars` (Cloudflare Pages) files from the project's root directory.
+
+- **Nunjucks Templates:** Variables are automatically passed to Nunjucks templates under the global `env` object. E.g., `{{ env.MY_API_KEY }}`.
+- **CMS Configuration:** Environment variables can be directly interpolated in `generic.json` strings using the `${VARIABLE_NAME}` syntax.
+
 ## Directory Structure
 
 Bricklayer expects the following default structure (overridable via options):
 
-```
+```text
+├── .github/
+│   └── workflows/
+│       └── deploy.yml  # Auto-generated GitHub Actions
+├── cms/                # (Optional) Cloned Sonic JS CMS
 ├── src/
 │   ├── _includes/      # Nunjucks layouts
 │   ├── assets/         # Static assets (images, fonts, tailwind)
@@ -86,5 +115,8 @@ Bricklayer expects the following default structure (overridable via options):
 │   ├── index.njk       # Pages
 │   └── post.njk
 ├── public/             # Build output
+├── .basebrick.config   # Bricklayer project settings
+├── .gitignore          # Version control exclusions
+├── wrangler.toml       # (Optional) Cloudflare configuration
 └── package.json
 ```
