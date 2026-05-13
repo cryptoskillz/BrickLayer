@@ -386,15 +386,15 @@ ${deploySteps}`;
 
     console.log('\n✅ Initialization complete!');
     console.log('\nNext steps:');
-    console.log('  1. Run `npm install` to install dependencies');
-    console.log('  2. Run `npm run build` to build the static site (or `npm run build:prod` for production)');
+    let stepCount = 1;
+    console.log(`  ${stepCount++}. Run \`npm install\` to install dependencies`);
+    console.log(`  ${stepCount++}. Run \`npm run build\` to build the static site (or \`npm run build:prod\` for production)`);
     if (includeCloudflare) {
-        console.log('  3. Run `npm run start` to test your Cloudflare Worker locally');
-        console.log('  4. Run `npm run deploy:preview` to deploy to a Cloudflare preview environment');
-        console.log('  5. Run `npm run deploy:prod` to deploy to Cloudflare production\n');
-    } else {
-        console.log('');
+        console.log(`  ${stepCount++}. Run \`npm run start\` to test your Cloudflare Worker locally`);
+        console.log(`  ${stepCount++}. Run \`npm run deploy:preview\` to deploy to a Cloudflare preview environment`);
+        console.log(`  ${stepCount++}. Run \`npm run deploy:prod\` to deploy to Cloudflare production`);
     }
+    console.log(`  ${stepCount++}. Run \`npm run manage\` to register this project with your Bricklayer Manager\n`);
 
     rl.close();
 }
