@@ -141,12 +141,27 @@ export async function manageProject(cwd, options = {}) {
         try {
             const { execSync } = await import('child_process');
             const whoamiOutput = execSync('npx wrangler whoami', { stdio: 'pipe', encoding: 'utf8' });
-            const match = whoamiOutput.match(/Account ID[^\n]*?([a-f0-9]{32})/i);
+            const match = whoamiOutput.match(/Account ID[\s\S]*?([a-f0-9]{32})/i);
             if (match && match[1]) {
                 projectConfig.accountId = match[1];
             }
         } catch (e) {
             // Ignore if whoami fails
+        }
+    }
+
+    // Extract CMS info if available
+    const genericJsonPath = path.join(cwd, 'src', 'components', 'generic.json');
+    if (fs.existsSync(genericJsonPath)) {
+        try {
+            const genericJson = JSON.parse(fs.readFileSync(genericJsonPath, 'utf8'));
+            if (genericJson.productionUrl) {
+                projectConfig.cmsUrl = genericJson.productionUrl;
+            } else if (genericJson.apiUrl) {
+                projectConfig.cmsUrl = genericJson.apiUrl;
+            }
+        } catch (e) {
+            // Ignore parse errors
         }
     }
 

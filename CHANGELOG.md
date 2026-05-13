@@ -1,5 +1,10 @@
 # Version History
 
+## 1.3.0 (May 2026)
+
+- **Automated CMS Deployment**: The `bricklayer cms deploy` wrapper now seamlessly deploys your local Sonic JS instance to Cloudflare Workers using D1 migrations.
+- **Smart Manager Sync**: When deploying a CMS (production or preview), the CLI intelligently extracts the generated worker URLs and automatically sends them to your configured Bricklayer Manager instance to keep your project dashboard up to date.
+
 ## 1.2.0 (May 2026)
 
 - **CLI Deployment Wrapper**: Introduced `bricklayer deploy` command using a pseudo-TTY to seamlessly wrap `wrangler deploy` across environments, automatically intercepting and capturing live Cloudflare URLs.

@@ -13,15 +13,31 @@ Bricklayer is the core static site generator (JamBrick) for BaseBrick. It is des
 - **Cloudflare Native**: Integrates native Cloudflare Workers support, automatically configuring `deploy:prod` and `deploy:preview` environments mapped to `wrangler.toml`.
 - **Centralized Management**: Includes a `bricklayer manage` command to securely register and sync your local `.basebrick.config` settings with a central Manager API.
 
-## Installation
+## Installation & Setup
 
-To create a new Bricklayer project with automatic scaffolding, run the `init` command:
+There are two primary ways to run Bricklayer: using the public NPM registry (`npx`), or running it locally for framework development.
+
+### Option 1: Standard Installation (NPX)
+If you want to build a site using the stable release of Bricklayer, use `npx` to fetch the package directly from the public registry and run the interactive scaffolding wizard:
 
 ```bash
-npx bricklayer init
+npx basebrick-bricklayer init
 ```
+This interactive setup will create the default folder structure, ask if you'd like to scaffold a demo site with starter templates, and optionally configure Sonic JS CMS integration automatically.
 
-This interactive setup will create the default folder structure and ask if you'd like to scaffold a demo site with starter templates, as well as configure Sonic JS CMS integration automatically.
+### Option 2: Local Development (Direct Node Call)
+If you are modifying the core `basebrick-bricklayer` package itself and want to test it locally on a project, you can invoke the CLI script directly using Node instead of the public registry.
+
+1. Create and navigate to your test site directory:
+```bash
+mkdir my-test-site
+cd my-test-site
+```
+2. Run the `init` command by pointing Node directly at your local bricklayer repository's executable:
+```bash
+node ../path/to/bricklayer/npm/bin/bricklayer.js init
+```
+This will run the scaffolding wizard and link everything to your local codebase! Any code changes you make to the local CLI will take effect immediately.
 
 ## Automated Deployment (GitHub Actions)
 
@@ -35,19 +51,18 @@ For Wrangler to authenticate correctly in a non-interactive CI/CD environment, y
    - `CLOUDFLARE_API_TOKEN`: Your newly created API token.
    - `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare Account ID (found on your Cloudflare dashboard overview).
 
-Alternatively, if you are working within the BaseBrick ecosystem locally, you can link it:
-
-```bash
-cd bricklayer
-npm install
-npm link
-```
-
 ## Usage
 
 You can use Bricklayer via its CLI interface or import it directly as a Node module in your build scripts.
 
 ### CLI
+
+To view all available commands and options, you can use the help flag:
+
+```bash
+bricklayer -h
+bricklayer --help
+```
 
 To run a standard development build (compiles templates, copies assets, builds Tailwind without minification):
 
@@ -59,6 +74,19 @@ To run a production build (minifies HTML/CSS, compresses images):
 
 ```bash
 bricklayer --prod
+```
+
+To deploy your site to Cloudflare:
+
+```bash
+bricklayer deploy
+bricklayer deploy --preview  # Deploys to a preview environment instead of production
+```
+
+To install and deploy the Sonic JS CMS into your project automatically:
+
+```bash
+bricklayer cms install
 ```
 
 To sync your project settings with a central Bricklayer Manager instance:
@@ -117,8 +145,9 @@ Bricklayer includes a centralized dashboard to help you track and administer all
 
 The **Bricklayer Manager** allows you to:
 - View all deployed Bricklayer sites via an elegant web UI.
-- Automatically track and store Cloudflare Worker endpoints.
+- Automatically track and store Cloudflare Worker endpoints (including production and preview CMS instances).
 - Access deep links directly to Cloudflare Dashboards for easy debugging.
+- Manage and track financial metrics, including annualized/monthly run rates, outstanding costs, and historical payment filtering.
 
 You can find the source code and instructions for deploying your own manager instance in the `manager/` directory of the core [BrickLayer GitHub Repository](https://github.com/cryptoskillz/BrickLayer/tree/main/manager).
 

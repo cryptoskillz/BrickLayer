@@ -48,9 +48,15 @@ export async function initProject(cwd) {
     const includeSonic = sonicJs.toLowerCase() !== 'n';
 
     let pullSonic = false;
+    let prodCmsUrl = 'https://cms.basebrick.xyz';
     if (includeSonic) {
         const pull = await question('Do you want to pull Sonic.js into the cms/ folder? (y/N) ');
         pullSonic = pull.toLowerCase() === 'y';
+        
+        const cmsUrlRaw = await question('What is the production CMS URL? (leave blank for https://cms.basebrick.xyz) ');
+        if (cmsUrlRaw.trim()) {
+            prodCmsUrl = cmsUrlRaw.trim();
+        }
     }
 
     const cloudflare = await question('Would you like to start with Cloudflare? (Y/n) ');
@@ -152,7 +158,7 @@ ${includeSonic ? '<p class="mt-4 mb-4"><a href="/blog.html" class="text-blue-500
             fs.writeFileSync(genericPath, JSON.stringify({
                 name: "sonic.js",
                 apiUrl: "/v1/posts",
-                productionUrl: "${PROD_CMS_URL}",
+                productionUrl: prodCmsUrl,
                 locaLUrl: "http://localhost:3018",
                 indexPage: "blog",
                 postPage: "post"
@@ -163,7 +169,7 @@ ${includeSonic ? '<p class="mt-4 mb-4"><a href="/blog.html" class="text-blue-500
         // Environment files
         const envPath = path.join(cwd, '.env');
         if (!fs.existsSync(envPath)) {
-            fs.writeFileSync(envPath, `PROD_CMS_URL=https://cms.basebrick.xyz\n`);
+            fs.writeFileSync(envPath, `PROD_CMS_URL=${prodCmsUrl}\n`);
             console.log(' Created .env file');
         }
 
@@ -218,7 +224,11 @@ url: post.title
         scripts: {
             build: "bricklayer",
             "build:prod": "bricklayer --prod",
-            manage: "bricklayer manage"
+            manage: "bricklayer manage",
+            "install:cms": "bricklayer cms install",
+            "start:cms": "bricklayer cms start",
+            "deploy:cms": "bricklayer cms deploy",
+            "deploy:previewcms": "bricklayer cms deploy --preview"
         },
         dependencies: {},
         devDependencies: {
@@ -369,8 +379,10 @@ ${deploySteps}`;
         }
     }
 
+    const { randomUUID } = await import('crypto');
     const basebrickConfigPath = path.join(cwd, '.basebrick.config');
     const basebrickConfig = {
+        id: randomUUID(),
         name: projectName,
         description: projectDescription,
         githubUrl: githubRepo,
