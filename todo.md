@@ -1,3 +1,7 @@
-add preview instances for cloudflare
-add the ability to add to the manager, it will ask you manager code and token
-    the manager is an idea i have had to manage sites he will send a payload to it with git url, sitemap, settings and this will let you manage the distrubation so everytime we build a new site it can be managed in the  
+ability to add 3rd party cms (strapi from the manager)
+should not say installing assets if you chose not to
+should have the abilit for no API
+add the ability to import files in directory to base brick format (if hard dont bother)
+if theres no cms . generic dont try and call the cms
+if you do an install and it detects a basebrick.config it should use those settings as defaults
+if there is a .git file detected set this as default
