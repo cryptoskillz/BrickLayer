@@ -188,7 +188,8 @@ export async function manageProject(cwd, options = {}) {
         if (response.ok) {
             console.log('✅ Successfully registered with Bricklayer Manager!');
         } else {
-            console.error(`❌ Manager returned error: ${response.status} ${response.statusText}`);
+            const errBody = await response.text();
+            console.error(`❌ Manager returned error: ${response.status} ${response.statusText}\nDetails: ${errBody}`);
         }
     } catch(e) {
         console.error(`❌ Failed to connect to manager: ${e.message}`);

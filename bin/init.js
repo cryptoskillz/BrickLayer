@@ -32,43 +32,84 @@ export async function initProject(cwd) {
         }
     }
 
-    const projectNameRaw = await question('What is the name of your project? (bricklayer-site) ');
-    const projectName = projectNameRaw.trim() || 'bricklayer-site';
+    let defaults = {
+        name: 'bricklayer-site',
+        description: '',
+        githubUrl: '',
+        includeDemo: 'Y',
+        includeSonic: 'Y',
+        pullSonic: 'N',
+        cmsUrl: 'https://cms.basebrick.xyz',
+        includeCloudflare: 'Y',
+        cfFramework: '1',
+        createDeploy: 'Y'
+    };
 
-    const projectDescriptionRaw = await question('Project description (optional): ');
-    const projectDescription = projectDescriptionRaw.trim() || '';
+    const configPath = path.join(cwd, '.basebrick.config');
+    if (fs.existsSync(configPath)) {
+        try {
+            const parsed = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            if (parsed.name) defaults.name = parsed.name;
+            if (parsed.description) defaults.description = parsed.description;
+            if (parsed.githubUrl) defaults.githubUrl = parsed.githubUrl;
+            if (parsed.includeDemo !== undefined) defaults.includeDemo = parsed.includeDemo ? 'Y' : 'n';
+            if (parsed.includeSonic !== undefined) defaults.includeSonic = parsed.includeSonic ? 'Y' : 'n';
+            if (parsed.pullSonic !== undefined) defaults.pullSonic = parsed.pullSonic ? 'y' : 'N';
+            if (parsed.includeCloudflare !== undefined) defaults.includeCloudflare = parsed.includeCloudflare ? 'Y' : 'n';
+            if (parsed.cfFramework === 'vanilla') defaults.cfFramework = '2';
+            else if (parsed.cfFramework === 'none') defaults.cfFramework = '3';
+            else if (parsed.cfFramework === 'hono') defaults.cfFramework = '1';
+            if (parsed.createDeploy !== undefined) defaults.createDeploy = parsed.createDeploy ? 'Y' : 'n';
+        } catch (e) {}
+    }
 
-    const githubRepoRaw = await question('What is the GitHub repository URL? (leave blank for none) ');
-    const githubRepo = githubRepoRaw.trim();
+    if (!defaults.githubUrl) {
+        try {
+            const originUrl = execSync('git config --get remote.origin.url', { cwd, encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
+            if (originUrl) defaults.githubUrl = originUrl;
+        } catch (e) {}
+    }
 
-    const demoSite = await question('Would you like to scaffold a demo site with starter templates? (Y/n) ');
-    const includeDemo = demoSite.toLowerCase() !== 'n';
+    const projectNameRaw = await question(`What is the name of your project? (${defaults.name}) `);
+    const projectName = (projectNameRaw.trim() || defaults.name).toLowerCase().replace(/[^a-z0-9\-]/g, '-');
 
-    const sonicJs = await question('Would you like to configure Sonic JS CMS integration? (Y/n) ');
-    const includeSonic = sonicJs.toLowerCase() !== 'n';
+    const projectDescriptionRaw = await question(`Project description (optional) [${defaults.description}]: `);
+    const projectDescription = projectDescriptionRaw.trim() || defaults.description;
+
+    const githubRepoRaw = await question(`What is the GitHub repository URL? [${defaults.githubUrl}]: `);
+    const githubRepo = githubRepoRaw.trim() || defaults.githubUrl;
+
+    const demoSite = await question(`Would you like to scaffold a demo site with starter templates? (${defaults.includeDemo}/n) `);
+    const includeDemo = (demoSite.trim() || defaults.includeDemo).toLowerCase() !== 'n';
+
+    const sonicJs = await question(`Would you like to configure Sonic JS CMS integration? (${defaults.includeSonic}/n) `);
+    const includeSonic = (sonicJs.trim() || defaults.includeSonic).toLowerCase() !== 'n';
 
     let pullSonic = false;
-    let prodCmsUrl = 'https://cms.basebrick.xyz';
+    let prodCmsUrl = defaults.cmsUrl;
     if (includeSonic) {
-        const pull = await question('Do you want to pull Sonic.js into the cms/ folder? (y/N) ');
-        pullSonic = pull.toLowerCase() === 'y';
+        const pull = await question(`Do you want to pull Sonic.js into the cms/ folder? (${defaults.pullSonic === 'y' ? 'Y/n' : 'y/N'}) `);
+        pullSonic = (pull.trim() || defaults.pullSonic).toLowerCase() === 'y';
         
-        const cmsUrlRaw = await question('What is the production CMS URL? (leave blank for https://cms.basebrick.xyz) ');
+        const cmsUrlRaw = await question(`What is the production CMS URL? [${defaults.cmsUrl}]: `);
         if (cmsUrlRaw.trim()) {
             prodCmsUrl = cmsUrlRaw.trim();
         }
     }
 
-    const cloudflare = await question('Would you like to start with Cloudflare? (Y/n) ');
-    const includeCloudflare = cloudflare.toLowerCase() !== 'n';
+    const cloudflare = await question(`Would you like to start with Cloudflare? (${defaults.includeCloudflare}/n) `);
+    const includeCloudflare = (cloudflare.trim() || defaults.includeCloudflare).toLowerCase() !== 'n';
     let cfFramework = '';
     if (includeCloudflare) {
-        const fw = await question('Which API framework? (1)hono or (2)vanilla? (1/2) ');
-        cfFramework = fw.trim() === '1' ? 'hono' : 'vanilla';
+        const fw = await question(`Which API framework? (1)hono, (2)vanilla, or (3)none? [${defaults.cfFramework}]: `);
+        const fwAns = fw.trim() || defaults.cfFramework;
+        if (fwAns === '2') cfFramework = 'vanilla';
+        else if (fwAns === '3') cfFramework = 'none';
+        else cfFramework = 'hono';
     }
 
-    const deployYml = await question('Would you like to generate a GitHub Actions deploy.yml? (Y/n) ');
-    const createDeploy = deployYml.toLowerCase() !== 'n';
+    const deployYml = await question(`Would you like to generate a GitHub Actions deploy.yml? (${defaults.createDeploy}/n) `);
+    const createDeploy = (deployYml.trim() || defaults.createDeploy).toLowerCase() !== 'n';
 
     console.log('\nScaffolding project...');
 
@@ -91,18 +132,20 @@ export async function initProject(cwd) {
         }
     });
 
-    // Download dancing ninja
-    const ninjaPath = path.join(cwd, 'src/assets/images/ninja-dance.gif');
-    if (!fs.existsSync(ninjaPath)) {
-        try {
-            console.log(' Downloading dancing ninja asset...');
-            const response = await fetch('https://www.rfgeneration.com/images/collections/gamepopper101/bitdance.gif', {
-                headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' }
-            });
-            const buffer = await response.arrayBuffer();
-            fs.writeFileSync(ninjaPath, Buffer.from(buffer));
-        } catch (e) {
-            console.log(' Failed to download ninja gif.');
+    if (includeDemo) {
+        // Download dancing ninja
+        const ninjaPath = path.join(cwd, 'src/assets/images/ninja-dance.gif');
+        if (!fs.existsSync(ninjaPath)) {
+            try {
+                console.log(' Downloading dancing ninja asset...');
+                const response = await fetch('https://www.rfgeneration.com/images/collections/gamepopper101/bitdance.gif', {
+                    headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' }
+                });
+                const buffer = await response.arrayBuffer();
+                fs.writeFileSync(ninjaPath, Buffer.from(buffer));
+            } catch (e) {
+                console.log(' Failed to download ninja gif.');
+            }
         }
     }
 
@@ -259,28 +302,31 @@ url: post.title
         
         const wranglerPath = path.join(cwd, 'wrangler.toml');
         if (!fs.existsSync(wranglerPath)) {
-            fs.writeFileSync(wranglerPath, `name = "${projectName}"\ncompatibility_date = "2024-05-12"\nmain = "api/worker.js"\n\n[assets]\ndirectory = "./public"\n\n[env.preview]\nname = "${projectName}-preview"\n`);
+            const mainLine = cfFramework === 'none' ? '' : 'main = "api/worker.js"\n';
+            fs.writeFileSync(wranglerPath, `name = "${projectName}"\ncompatibility_date = "2024-05-12"\n${mainLine}\n[assets]\ndirectory = "./public"\n\n[env.preview]\nname = "${projectName}-preview"\n`);
             console.log(' Created wrangler.toml');
         }
 
-        const apiDir = path.join(cwd, 'api');
-        if (!fs.existsSync(apiDir)) {
-            fs.mkdirSync(apiDir, { recursive: true });
-            console.log(' Created api/');
-        }
-
-        if (cfFramework === 'hono') {
-            pkg.dependencies.hono = "^4.3.0";
-            const workerPath = path.join(cwd, 'api/worker.js');
-            if (!fs.existsSync(workerPath)) {
-                fs.writeFileSync(workerPath, `import { Hono } from 'hono';\n\nconst app = new Hono();\n\napp.get('/api', (c) => {\n  return c.json({ message: 'Hello from Hono API!' });\n});\n\nexport default app;\n`);
-                console.log(' Created api/worker.js (Hono API)');
+        if (cfFramework !== 'none') {
+            const apiDir = path.join(cwd, 'api');
+            if (!fs.existsSync(apiDir)) {
+                fs.mkdirSync(apiDir, { recursive: true });
+                console.log(' Created api/');
             }
-        } else {
-            const workerPath = path.join(cwd, 'api/worker.js');
-            if (!fs.existsSync(workerPath)) {
-                fs.writeFileSync(workerPath, `export default {\n  async fetch(request, env, ctx) {\n    const url = new URL(request.url);\n    if (url.pathname.startsWith('/api')) {\n      return new Response(JSON.stringify({ message: 'Hello from Vanilla API!' }), { headers: { 'Content-Type': 'application/json' } });\n    }\n    return new Response('Not found', { status: 404 });\n  }\n};\n`);
-                console.log(' Created api/worker.js (Vanilla API)');
+
+            if (cfFramework === 'hono') {
+                pkg.dependencies.hono = "^4.3.0";
+                const workerPath = path.join(cwd, 'api/worker.js');
+                if (!fs.existsSync(workerPath)) {
+                    fs.writeFileSync(workerPath, `import { Hono } from 'hono';\n\nconst app = new Hono();\n\napp.get('/api', (c) => {\n  return c.json({ message: 'Hello from Hono API!' });\n});\n\nexport default app;\n`);
+                    console.log(' Created api/worker.js (Hono API)');
+                }
+            } else {
+                const workerPath = path.join(cwd, 'api/worker.js');
+                if (!fs.existsSync(workerPath)) {
+                    fs.writeFileSync(workerPath, `export default {\n  async fetch(request, env, ctx) {\n    const url = new URL(request.url);\n    if (url.pathname.startsWith('/api')) {\n      return new Response(JSON.stringify({ message: 'Hello from Vanilla API!' }), { headers: { 'Content-Type': 'application/json' } });\n    }\n    return new Response('Not found', { status: 404 });\n  }\n};\n`);
+                    console.log(' Created api/worker.js (Vanilla API)');
+                }
             }
         }
     }
