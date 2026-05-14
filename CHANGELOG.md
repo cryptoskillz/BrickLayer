@@ -1,5 +1,12 @@
 # Version History
 
+## 1.4.0 (May 2026)
+
+- **Smart Scaffolding Defaults**: The `bricklayer init` command now intelligently parses local `.basebrick.config` files and dynamically injects them as default answers in the interactive setup wizard.
+- **Git Origin Auto-Detection**: The scaffolding wizard automatically scans local `.git/config` files to extract the `remote.origin.url` and provides it as the default GitHub repository.
+- **Static Assets Target ("No API")**: Added a third `none` option to the Cloudflare API Framework prompt, enabling pure static workers without generating unnecessary `api/` folders or `main` entrypoints.
+- **Conditional Media Downloads**: Optimized project scaffolding so that the "Dancing Ninja" starter asset is only fetched over the network if the demo site template is requested.
+
 ## 1.3.0 (May 2026)
 
 - **Automated CMS Deployment**: The `bricklayer cms deploy` wrapper now seamlessly deploys your local Sonic JS instance to Cloudflare Workers using D1 migrations.
